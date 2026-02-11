@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Zap, Settings, ChevronLeft, LayoutGrid } from 'lucide-react';
+import { Zap, Settings, ChevronLeft, LayoutGrid, Shield } from 'lucide-react';
+import { GatewayStatus } from '@/components/GatewayStatus';
 import { useMissionControl } from '@/lib/store';
 import { format } from 'date-fns';
 import type { Workspace } from '@/lib/types';
@@ -102,6 +103,7 @@ export function Header({ workspace }: HeaderProps) {
 
       {/* Right: Time & Status */}
       <div className="flex items-center gap-4">
+        <GatewayStatus />
         <span className="text-mc-text-secondary text-sm font-mono">
           {format(currentTime, 'HH:mm:ss')}
         </span>
@@ -119,6 +121,13 @@ export function Header({ workspace }: HeaderProps) {
           />
           {isOnline ? 'ONLINE' : 'OFFLINE'}
         </div>
+        <button
+          onClick={() => router.push('/admin')}
+          className="p-2 hover:bg-mc-bg-tertiary rounded text-mc-text-secondary"
+          title="Agent Admin"
+        >
+          <Shield className="w-5 h-5" />
+        </button>
         <button
           onClick={() => router.push('/settings')}
           className="p-2 hover:bg-mc-bg-tertiary rounded text-mc-text-secondary"
