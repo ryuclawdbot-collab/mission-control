@@ -8,24 +8,9 @@ export interface AgentWorkspace {
 }
 
 export const AGENT_WORKSPACES: AgentWorkspace[] = [
-  {
-    id: 'main',
-    name: 'Jarvis',
-    emoji: '🤖',
-    path: '/home/node/clawd',
-  },
-  {
-    id: 'coach',
-    name: 'Lasso',
-    emoji: '🧢',
-    path: '/home/node/coach-workspace',
-  },
-  {
-    id: '818boyz',
-    name: 'Roy_bot',
-    emoji: '🎮',
-    path: '/home/node/818boyz-workspace',
-  },
+  { id: 'main', name: 'Jarvis', emoji: '🤖', path: '/home/node/clawd' },
+  { id: 'coach', name: 'Lasso', emoji: '🏈', path: '/home/node/coach-workspace' },
+  { id: '818boyz', name: 'Roy_bot', emoji: '🎮', path: '/home/node/818boyz-workspace' },
 ];
 
 export const EDITABLE_FILES = [
@@ -37,3 +22,7 @@ export const EDITABLE_FILES = [
   'IDENTITY.md',
   'HEARTBEAT.md',
 ];
+
+export function getAgentWorkspace(agentId: string): AgentWorkspace | undefined {
+  return AGENT_WORKSPACES.find(a => a.id === agentId);
+}

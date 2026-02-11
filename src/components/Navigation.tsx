@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Clock, FileText, Users, Settings } from 'lucide-react';
+import { Home, Clock, FileText, Users } from 'lucide-react';
 
 export function Navigation() {
   const pathname = usePathname();

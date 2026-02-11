@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { GatewayStatus } from '@/components/GatewayStatus';
-import { Navigation } from '@/components/Navigation';
 
 export const metadata: Metadata = {
   title: 'Mission Control',
@@ -24,11 +22,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-mc-bg text-mc-text min-h-screen">
-        <GatewayStatus />
-        <Navigation />
-        {children}
-      </body>
+      <body className="bg-mc-bg text-mc-text min-h-screen">{children}</body>
     </html>
   );
 }
