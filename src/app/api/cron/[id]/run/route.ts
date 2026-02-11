@@ -1,31 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOpenClawClient } from '@/lib/openclaw/client';
+import { runGatewayCronJob } from '@/lib/openclaw/gateway-admin';
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const jobId = params.id;
-
-    const client = getOpenClawClient();
-
-    if (!client.isConnected()) {
-      await client.connect();
-    }
-
-    // TODO: Implement actual job execution logic
+    const result = await runGatewayCronJob(params.id);
 
     return NextResponse.json({
       success: true,
-      message: `Job ${jobId} execution triggered`,
-      job_id: jobId,
+      message: `Job ${params.id} execution triggered`,
+      job_id: params.id,
+      result,
     });
   } catch (error) {
-    console.error('Failed to run cron job:', error);
-    return NextResponse.json(
-      { error: 'Failed to run cron job' },
-      { status: 500 }
-    );
+    console.error('Failed to run cron job via gateway:', error);
+    return NextResponse.json({ error: 'Failed to run cron job' }, { status: 500 });
   }
 }

@@ -1,66 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const AGENT_WORKSPACES: Record<string, string> = {
-  main: '/home/node/clawd',
-  coach: '/home/node/coach-workspace',
-  '818boyz': '/home/node/818boyz-workspace',
-};
-
-const ALLOWED_FILES = [
-  'SOUL.md',
-  'USER.md',
-  'AGENTS.md',
-  'MEMORY.md',
-  'TOOLS.md',
-  'IDENTITY.md',
-  'HEARTBEAT.md',
-];
+import { EDITABLE_FILES } from '@/lib/agent-workspaces';
+import { listGatewayAgentFiles, listGatewayAgents } from '@/lib/openclaw/gateway-admin';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const agentId = params.id;
-    const workspacePath = AGENT_WORKSPACES[agentId];
+    const agents = await listGatewayAgents();
+    const agent = agents.agents.find((a) => a.id === agentId);
 
-    if (!workspacePath) {
-      return NextResponse.json(
-        { error: 'Unknown agent ID' },
-        { status: 404 }
-      );
+    if (!agent) {
+      return NextResponse.json({ error: 'Unknown agent ID' }, { status: 404 });
     }
 
-    const files = await Promise.all(
-      ALLOWED_FILES.map(async (filename) => {
-        const filePath = path.join(workspacePath, filename);
-        try {
-          const stats = await fs.stat(filePath);
-          return {
-            filename,
-            exists: true,
-            size: stats.size,
-            modified: stats.mtime.toISOString(),
-          };
-        } catch {
-          return {
-            filename,
-            exists: false,
-            size: 0,
-            modified: null,
-          };
-        }
-      })
-    );
+    const fileList = await listGatewayAgentFiles(agentId);
+    const byName = new Map(fileList.files.map((file) => [file.name, file]));
 
-    return NextResponse.json({ agent_id: agentId, workspace: workspacePath, files });
+    const files = EDITABLE_FILES.map((filename) => {
+      const file = byName.get(filename);
+      return {
+        filename,
+        exists: !!file && !file.missing,
+        size: file?.size ?? 0,
+        modified: file?.updatedAtMs ? new Date(file.updatedAtMs).toISOString() : null,
+      };
+    });
+
+    return NextResponse.json({
+      agent_id: agentId,
+      workspace: fileList.workspace,
+      files,
+    });
   } catch (error) {
-    console.error('Failed to list agent files:', error);
-    return NextResponse.json(
-      { error: 'Failed to list agent files' },
-      { status: 500 }
-    );
+    console.error('Failed to list agent files via gateway:', error);
+    return NextResponse.json({ error: 'Failed to list agent files' }, { status: 500 });
   }
 }

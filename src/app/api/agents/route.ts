@@ -1,26 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { queryAll, queryOne, run } from '@/lib/db';
+import { queryOne, run } from '@/lib/db';
+import { listGatewayAgents } from '@/lib/openclaw/gateway-admin';
 import type { Agent, CreateAgentRequest } from '@/lib/types';
 
 // GET /api/agents - List all agents
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const workspaceId = request.nextUrl.searchParams.get('workspace_id');
-    
-    let agents: Agent[];
-    if (workspaceId) {
-      agents = queryAll<Agent>(`
-        SELECT * FROM agents WHERE workspace_id = ? ORDER BY is_master DESC, name ASC
-      `, [workspaceId]);
-    } else {
-      agents = queryAll<Agent>(`
-        SELECT * FROM agents ORDER BY is_master DESC, name ASC
-      `);
-    }
+    const gatewayAgents = await listGatewayAgents();
+    const now = new Date().toISOString();
+
+    const agents: Agent[] = gatewayAgents.agents.map((agent, index) => ({
+      id: agent.id,
+      name: agent.name || agent.id,
+      role: agent.id === (gatewayAgents.defaultId || gatewayAgents.mainKey || 'main') ? 'Master Agent' : 'Agent',
+      avatar_emoji: '🤖',
+      status: 'standby',
+      is_master: agent.id === (gatewayAgents.defaultId || gatewayAgents.mainKey || 'main'),
+      workspace_id: 'default',
+      created_at: now,
+      updated_at: now,
+      description: index === 0 ? 'Managed via OpenClaw gateway config' : undefined,
+    }));
+
     return NextResponse.json(agents);
   } catch (error) {
-    console.error('Failed to fetch agents:', error);
+    console.error('Failed to fetch agents from gateway config:', error);
     return NextResponse.json({ error: 'Failed to fetch agents' }, { status: 500 });
   }
 }
