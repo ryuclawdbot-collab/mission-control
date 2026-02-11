@@ -89,7 +89,7 @@ export function WorkspaceDashboard() {
               <WorkspaceCard 
                 key={workspace.id} 
                 workspace={workspace} 
-                onDelete={(id) => setWorkspaces(workspaces.filter(w => w.id !== id))}
+                onDelete={(id) => setWorkspaces((prev) => prev.filter((w) => w.id !== id))}
               />
             ))}
             
