@@ -1,30 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAgentWorkspace, EDITABLE_FILES } from '@/lib/agent-workspaces';
-import * as fs from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'fs';
+import path from 'path';
 
-// GET /api/agents/:id/filelist - List available files for an agent
+const AGENT_WORKSPACES: Record<string, string> = {
+  main: '/home/node/clawd',
+  coach: '/home/node/coach-workspace',
+  '818boyz': '/home/node/818boyz-workspace',
+};
+
+const ALLOWED_FILES = [
+  'SOUL.md',
+  'USER.md',
+  'AGENTS.md',
+  'MEMORY.md',
+  'TOOLS.md',
+  'IDENTITY.md',
+  'HEARTBEAT.md',
+];
+
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const workspace = getAgentWorkspace(params.id);
-  if (!workspace) {
-    return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
-  }
+  try {
+    const agentId = params.id;
+    const workspacePath = AGENT_WORKSPACES[agentId];
 
-  const files = EDITABLE_FILES.map(filename => {
-    const filePath = path.join(workspace.path, filename);
-    const exists = fs.existsSync(filePath);
-    let mtime: string | null = null;
-    let size = 0;
-    if (exists) {
-      const stat = fs.statSync(filePath);
-      mtime = stat.mtime.toISOString();
-      size = stat.size;
+    if (!workspacePath) {
+      return NextResponse.json(
+        { error: 'Unknown agent ID' },
+        { status: 404 }
+      );
     }
-    return { filename, exists, mtime, size };
-  });
 
-  return NextResponse.json({ agent: workspace, files });
+    const files = await Promise.all(
+      ALLOWED_FILES.map(async (filename) => {
+        const filePath = path.join(workspacePath, filename);
+        try {
+          const stats = await fs.stat(filePath);
+          return {
+            filename,
+            exists: true,
+            size: stats.size,
+            modified: stats.mtime.toISOString(),
+          };
+        } catch {
+          return {
+            filename,
+            exists: false,
+            size: 0,
+            modified: null,
+          };
+        }
+      })
+    );
+
+    return NextResponse.json({ agent_id: agentId, workspace: workspacePath, files });
+  } catch (error) {
+    console.error('Failed to list agent files:', error);
+    return NextResponse.json(
+      { error: 'Failed to list agent files' },
+      { status: 500 }
+    );
+  }
 }

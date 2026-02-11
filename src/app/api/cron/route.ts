@@ -22,13 +22,11 @@ interface CronJob {
   [key: string]: unknown;
 }
 
-// GET /api/cron - List all cron jobs
 export async function GET() {
   try {
     const content = await fs.readFile(CRON_JOBS_PATH, 'utf-8');
     const jobs: CronJob[] = JSON.parse(content);
 
-    // Group jobs by agent and channel
     const grouped: Record<string, Record<string, CronJob[]>> = {};
 
     for (const job of jobs) {
@@ -62,7 +60,6 @@ export async function GET() {
   }
 }
 
-// POST /api/cron - Create a new cron job
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -74,16 +71,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read existing jobs
     let jobs: CronJob[] = [];
     try {
       const content = await fs.readFile(CRON_JOBS_PATH, 'utf-8');
       jobs = JSON.parse(content);
     } catch {
-      // File doesn't exist, start with empty array
+      // File doesn't exist
     }
 
-    // Create new job
     const newJob: CronJob = {
       id: body.id || uuidv4(),
       name: body.name,
@@ -97,11 +92,8 @@ export async function POST(request: NextRequest) {
 
     jobs.push(newJob);
 
-    // Ensure directory exists
     const dir = path.dirname(CRON_JOBS_PATH);
     await fs.mkdir(dir, { recursive: true });
-
-    // Write back
     await fs.writeFile(CRON_JOBS_PATH, JSON.stringify(jobs, null, 2), 'utf-8');
 
     return NextResponse.json(newJob, { status: 201 });

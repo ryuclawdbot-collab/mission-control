@@ -27,7 +27,7 @@ export function AgentFilesEditor() {
   // Load file list for agent
   const loadFiles = useCallback(async (agentId: string) => {
     try {
-      const res = await fetch(`/api/agents/${agentId}/files`);
+      const res = await fetch(`/api/agents/${agentId}/filelist`);
       const data = await res.json();
       setFiles(data.files || []);
     } catch {
